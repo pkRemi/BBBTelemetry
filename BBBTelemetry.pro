@@ -5,19 +5,21 @@
 #-------------------------------------------------
 
 QT       += core gui
-
+greaterThan(QT_MAJOR_VERSION, 4): QT += printsupport
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = BBBTelemetry
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
-        bbbtelemetry.cpp \
-    hid_pnp.cpp
+SOURCES +=  main.cpp\
+            bbbtelemetry.cpp \
+            hid_pnp.cpp \
+         ../QCustomPlot/qcustomplot.cpp
 
 HEADERS  += bbbtelemetry.h \
-    hid_pnp.h
+            hid_pnp.h \
+         ../QCustomPlot/qcustomplot.h
 
 FORMS    += bbbtelemetry.ui
 
