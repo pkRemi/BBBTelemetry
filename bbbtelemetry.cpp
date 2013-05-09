@@ -121,12 +121,12 @@ void BBBTelemetry::on_pushButton_clicked()
 {
     emit toggle_leds_button_pressed();
 }
-void BBBTelemetry::update_gui(bool isConnected, bool isPressed, int potentiometerValue, int potentiometerValue2)
+void BBBTelemetry::update_gui(bool isConnected, bool isPressed, signed int potentiometerValue, signed int potentiometerValue2)
 {
     QString sPotValue;
     QString sPotValue2;
-    sPotValue = QString("%1").arg(potentiometerValue);
-    sPotValue2 = QString("%1").arg(potentiometerValue2);
+    sPotValue = QString("%1").arg(potentiometerValue,4,16);
+    sPotValue2 = QString("%1").arg(potentiometerValue2,4,16);
     if(isConnected)
     {
         ui->label_2->setEnabled(true);
@@ -148,6 +148,7 @@ void BBBTelemetry::update_gui(bool isConnected, bool isPressed, int potentiomete
         ui->progressBar_2->setValue(potentiometerValue2);
         ui->PotValue_2->setText(sPotValue2);
         BBBTelemetry::realtimeDataSlot(potentiometerValue,potentiometerValue2);
+//        BBBTelemetry::realtimeDataSlot(10, 0 - 10);
     }
     else
     {

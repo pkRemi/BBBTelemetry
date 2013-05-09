@@ -29,8 +29,8 @@ private:
     bool isConnected;
     bool pushbuttonStatus;
     bool toggleLeds;
-    int potentiometerValue;
-    int potentiometerValue2;
+    qint16 potentiometerValue;
+    qint16 potentiometerValue2;
 
     hid_device *device;
     QTimer *timer;
