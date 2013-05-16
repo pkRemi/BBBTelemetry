@@ -15,11 +15,13 @@ TEMPLATE = app
 SOURCES +=  main.cpp\
             bbbtelemetry.cpp \
             hid_pnp.cpp \
-         ../QCustomPlot/qcustomplot.cpp
+         ../QCustomPlot/qcustomplot.cpp \
+    telemetry.cpp
 
 HEADERS  += bbbtelemetry.h \
             hid_pnp.h \
-         ../QCustomPlot/qcustomplot.h
+         ../QCustomPlot/qcustomplot.h \
+    telemetry.h
 
 FORMS    += bbbtelemetry.ui
 

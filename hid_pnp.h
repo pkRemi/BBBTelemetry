@@ -8,6 +8,7 @@
 #include <wchar.h>
 #include <string.h>
 #include <stdlib.h>
+#include "telemetry.h"
 
 #define MAX_STR 65
 
@@ -19,7 +20,7 @@ public:
     ~HID_PnP();
 
 signals:
-    void hid_comm_update(bool isConnected, bool isPressed, int potentiometerValue, int potentiometerValue2);
+    void hid_comm_update(bool isConnected, bool isPressed, int potentiometerValue, int potentiometerValue2, Telemetry tele);
 
 public slots:
     void toggle_leds();
@@ -31,7 +32,9 @@ private:
     bool toggleLeds;
     qint16 potentiometerValue;
     qint16 potentiometerValue2;
-
+    Telemetry tele;
+    int t;
+    int tt;
     hid_device *device;
     QTimer *timer;
     unsigned char buf[MAX_STR];

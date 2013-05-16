@@ -73,11 +73,44 @@ void HID_PnP::PollUSB()
         }
         else if(buf[0] == 0x81) {
             pushbuttonStatus = (buf[1] == 0x00);
+            buf[1] = 0x42;
+        }
+
+        else if(buf[0] == 0x42) {
+            //**** Telemetry string format for command=0x42 ************************/
+            //** command, axh, axl, ayh, ayl, azh, azl, th, tl,             8byte **/
+            //** gxh, gxl, gyh, gyl, gzh, gzl, cxh, cxl, cyh, cyl, czh, czl,12byte**/
+            //**   --Total 20byte                                                 **/
+            tt = 1;
+            tele.ax = (buf[tt]<<8) + buf[tt+1];
+            tt = tt + 2;
+            tele.ay = (buf[tt]<<8) + buf[tt+1];
+            tt = tt + 2;
+            tele.az = (buf[tt]<<8) + buf[tt+1];
+            tt = tt + 2;
+            tele.temp = (buf[tt]<<8) + buf[tt+1];
+            tt = tt + 2;
+            tele.gx = (buf[tt]<<8) + buf[tt+1];
+            tt = tt + 2;
+            tele.gy = (buf[tt]<<8) + buf[tt+1];
+            tt = tt + 2;
+            tele.gz = (buf[tt]<<8) + buf[tt+1];
+            tt = tt + 2;
+            tele.cx = (buf[tt]<<8) + buf[tt+1];
+            tt = tt + 2;
+            tele.cy = (buf[tt]<<8) + buf[tt+1];
+            tt = tt + 2;
+            tele.cz = (buf[tt]<<8) + buf[tt+1];
+
+            buf[1] = 0x37;
+        }
+        else if(buf[0] == 0x41) {
+            //**** No new telemetry, do nothing. ****/
             buf[1] = 0x37;
         }
     }
 
-    hid_comm_update(isConnected, pushbuttonStatus, potentiometerValue, potentiometerValue2);
+    hid_comm_update(isConnected, pushbuttonStatus, potentiometerValue, potentiometerValue2, tele);
 }
 
 void HID_PnP::toggle_leds() {
@@ -92,6 +125,6 @@ void HID_PnP::CloseDevice() {
     potentiometerValue = 0;
     potentiometerValue2 = 100;
     toggleLeds = 0;
-    hid_comm_update(isConnected, pushbuttonStatus, potentiometerValue, potentiometerValue2);
+    hid_comm_update(isConnected, pushbuttonStatus, potentiometerValue, potentiometerValue2, tele);
     timer->start(250);
 }

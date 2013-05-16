@@ -9,13 +9,13 @@ BBBTelemetry::BBBTelemetry(QWidget *parent) :
     plugNPlay = new HID_PnP();
     setupRealtimeDataDemo(ui->customPlot);
     connect(this, SIGNAL(toggle_leds_button_pressed()), plugNPlay, SLOT(toggle_leds()));
-    connect(plugNPlay, SIGNAL(hid_comm_update(bool, bool, int, int)), this, SLOT(update_gui(bool, bool, int, int)));
+    connect(plugNPlay, SIGNAL(hid_comm_update(bool, bool, int, int, Telemetry)), this, SLOT(update_gui(bool, bool, int, int, Telemetry)));
 }
 
 BBBTelemetry::~BBBTelemetry()
 {
     disconnect(this, SIGNAL(toggle_leds_button_pressed()), plugNPlay, SLOT(toggle_leds()));
-    disconnect(plugNPlay, SIGNAL(hid_comm_update(bool, bool, int, int)), this, SLOT(update_gui(bool, bool, int, int)));
+    disconnect(plugNPlay, SIGNAL(hid_comm_update(bool, bool, int, int, Telemetry)), this, SLOT(update_gui(bool, bool, int, int, Telemetry)));
     delete ui;
     delete plugNPlay;
 }
@@ -121,7 +121,7 @@ void BBBTelemetry::on_pushButton_clicked()
 {
     emit toggle_leds_button_pressed();
 }
-void BBBTelemetry::update_gui(bool isConnected, bool isPressed, signed int potentiometerValue, signed int potentiometerValue2)
+void BBBTelemetry::update_gui(bool isConnected, bool isPressed, int potentiometerValue, int potentiometerValue2, Telemetry tele)
 {
     QString sPotValue;
     QString sPotValue2;
@@ -147,7 +147,9 @@ void BBBTelemetry::update_gui(bool isConnected, bool isPressed, signed int poten
         ui->PotValue->setText(sPotValue);
         ui->progressBar_2->setValue(potentiometerValue2);
         ui->PotValue_2->setText(sPotValue2);
-        BBBTelemetry::realtimeDataSlot(potentiometerValue,potentiometerValue2);
+//        BBBTelemetry::realtimeDataSlot(potentiometerValue,potentiometerValue2);
+        BBBTelemetry::realtimeDataSlot(tele.ax,tele.ay);
+
 //        BBBTelemetry::realtimeDataSlot(10, 0 - 10);
     }
     else
