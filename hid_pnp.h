@@ -24,12 +24,14 @@ signals:
 
 public slots:
     void toggle_leds();
+    void toggle_motors();
     void PollUSB();
 
 private:
     bool isConnected;
     bool pushbuttonStatus;
     bool toggleLeds;
+    bool toggleMotors;
     qint16 potentiometerValue;
     qint16 potentiometerValue2;
     Telemetry tele;

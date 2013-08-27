@@ -7,20 +7,25 @@ BBBTelemetry::BBBTelemetry(QWidget *parent) :
 {
     ui->setupUi(this);
     plugNPlay = new HID_PnP();
-    setupRealtimeDataDemo(ui->customPlot);
+    setupRealtimeDataDemo(ui->customPlot, ui->customPlotAccel, ui->customPlotGyro,ui->customPlotCompass);
     connect(this, SIGNAL(toggle_leds_button_pressed()), plugNPlay, SLOT(toggle_leds()));
+    connect(this, SIGNAL(toggle_EnableMotorsButton_pressed()), plugNPlay, SLOT(toggle_motors()));
     connect(plugNPlay, SIGNAL(hid_comm_update(bool, bool, int, int, Telemetry)), this, SLOT(update_gui(bool, bool, int, int, Telemetry)));
 }
 
 BBBTelemetry::~BBBTelemetry()
 {
     disconnect(this, SIGNAL(toggle_leds_button_pressed()), plugNPlay, SLOT(toggle_leds()));
+    disconnect(this, SIGNAL(toggle_EnableMotorsButton_pressed()), plugNPlay, SLOT(toggle_motors()));
     disconnect(plugNPlay, SIGNAL(hid_comm_update(bool, bool, int, int, Telemetry)), this, SLOT(update_gui(bool, bool, int, int, Telemetry)));
     delete ui;
     delete plugNPlay;
 }
 
-void BBBTelemetry::setupRealtimeDataDemo(QCustomPlot *customPlot)
+void BBBTelemetry::setupRealtimeDataDemo(QCustomPlot *customPlot,
+                                         QCustomPlot *customPlotAccel,
+                                         QCustomPlot *customPlotGyro,
+                                         QCustomPlot *customPlotCompass)
 {
 #if QT_VERSION < QT_VERSION_CHECK(4, 7, 0)
   QMessageBox::critical(this, "", "You're using Qt < 4.7, the realtime data demo needs functions that are available with Qt 4.7 to work properly");
@@ -56,7 +61,7 @@ void BBBTelemetry::setupRealtimeDataDemo(QCustomPlot *customPlot)
   customPlot->xAxis->setTickLabelType(QCPAxis::ltDateTime);
   customPlot->xAxis->setDateTimeFormat("hh:mm:ss");
   customPlot->xAxis->setAutoTickStep(false);
-  customPlot->xAxis->setTickStep(2);
+  customPlot->xAxis->setTickStep(8);
   customPlot->setupFullAxesBox();
 
   // make left and bottom axes transfer their ranges to right and top axes:
@@ -66,9 +71,57 @@ void BBBTelemetry::setupRealtimeDataDemo(QCustomPlot *customPlot)
   // setup a timer that repeatedly calls BBBTelemetry::realtimeDataSlot:
   //connect(&dataTimer, SIGNAL(timeout()), this, SLOT(realtimeDataSlot()));
   //dataTimer.start(25); // Interval 0 means to refresh as fast as possible
+
+  //********** Setup Accel plot, no dot only line but 3 axis
+  customPlotAccel->addGraph(); // blue line
+  customPlotAccel->graph(0)->setPen(QPen(Qt::blue));
+  customPlotAccel->addGraph(); // red line
+  customPlotAccel->graph(1)->setPen(QPen(Qt::red));
+  customPlotAccel->addGraph(); // green line
+  customPlotAccel->graph(2)->setPen(QPen(Qt::green));
+  customPlotAccel->xAxis->setTickLabelType(QCPAxis::ltDateTime);
+  customPlotAccel->xAxis->setDateTimeFormat("hh:mm:ss");
+  customPlotAccel->xAxis->setAutoTickStep(false);
+  customPlotAccel->xAxis->setTickStep(8);
+  customPlotAccel->setupFullAxesBox();
+  // make left and bottom axes transfer their ranges to right and top axes:
+  connect(customPlotAccel->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlotAccel->xAxis2, SLOT(setRange(QCPRange)));
+  connect(customPlotAccel->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlotAccel->yAxis2, SLOT(setRange(QCPRange)));
+
+  //********** Setup Gyro plot, no dot only line but 3 axis
+  customPlotGyro->addGraph(); // blue line
+  customPlotGyro->graph(0)->setPen(QPen(Qt::blue));
+  customPlotGyro->addGraph(); // red line
+  customPlotGyro->graph(1)->setPen(QPen(Qt::red));
+  customPlotGyro->addGraph(); // green line
+  customPlotGyro->graph(2)->setPen(QPen(Qt::green));
+  customPlotGyro->xAxis->setTickLabelType(QCPAxis::ltDateTime);
+  customPlotGyro->xAxis->setDateTimeFormat("hh:mm:ss");
+  customPlotGyro->xAxis->setAutoTickStep(false);
+  customPlotGyro->xAxis->setTickStep(8);
+  customPlotGyro->setupFullAxesBox();
+  // make left and bottom axes transfer their ranges to right and top axes:
+  connect(customPlotGyro->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlotGyro->xAxis2, SLOT(setRange(QCPRange)));
+  connect(customPlotGyro->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlotGyro->yAxis2, SLOT(setRange(QCPRange)));
+
+  //********** Setup Compass plot, no dot only line but 3 axis
+  customPlotCompass->addGraph(); // blue line
+  customPlotCompass->graph(0)->setPen(QPen(Qt::blue));
+  customPlotCompass->addGraph(); // red line
+  customPlotCompass->graph(1)->setPen(QPen(Qt::red));
+  customPlotCompass->addGraph(); // green line
+  customPlotCompass->graph(2)->setPen(QPen(Qt::green));
+  customPlotCompass->xAxis->setTickLabelType(QCPAxis::ltDateTime);
+  customPlotCompass->xAxis->setDateTimeFormat("hh:mm:ss");
+  customPlotCompass->xAxis->setAutoTickStep(false);
+  customPlotCompass->xAxis->setTickStep(8);
+  customPlotCompass->setupFullAxesBox();
+  // make left and bottom axes transfer their ranges to right and top axes:
+  connect(customPlotCompass->xAxis, SIGNAL(rangeChanged(QCPRange)), customPlotCompass->xAxis2, SLOT(setRange(QCPRange)));
+  connect(customPlotCompass->yAxis, SIGNAL(rangeChanged(QCPRange)), customPlotCompass->yAxis2, SLOT(setRange(QCPRange)));
 }
 
-void BBBTelemetry::realtimeDataSlot(int value0, int value1)
+void BBBTelemetry::realtimeDataSlot(int value0, int value1, Telemetry tele)
 {
     // calculate two new data points:
   #if QT_VERSION < QT_VERSION_CHECK(4, 7, 0)
@@ -90,31 +143,80 @@ void BBBTelemetry::realtimeDataSlot(int value0, int value1)
       ui->customPlot->graph(3)->clearData();
       ui->customPlot->graph(3)->addData(key, value1);
       // remove data of lines that's outside visible range:
-      ui->customPlot->graph(0)->removeDataBefore(key-8);
-      ui->customPlot->graph(1)->removeDataBefore(key-8);
+      ui->customPlot->graph(0)->removeDataBefore(key-32);
+      ui->customPlot->graph(1)->removeDataBefore(key-32);
       // rescale value (vertical) axis to fit the current data:
       ui->customPlot->graph(0)->rescaleValueAxis();
       ui->customPlot->graph(1)->rescaleValueAxis(true);
+      //lastPointKey = key;
+      //***** Accel Plot ****************************************************/
+      // add data to lines:
+      ui->customPlotAccel->graph(0)->addData(key, tele.ax);
+      ui->customPlotAccel->graph(1)->addData(key, tele.ay);
+      ui->customPlotAccel->graph(2)->addData(key, tele.az);
+      // remove data of lines that's outside visible range:
+      ui->customPlotAccel->graph(0)->removeDataBefore(key-32);
+      ui->customPlotAccel->graph(1)->removeDataBefore(key-32);
+      ui->customPlotAccel->graph(2)->removeDataBefore(key-32);
+      // rescale value (vertical) axis to fit the current data:
+      ui->customPlotAccel->graph(0)->rescaleValueAxis();
+      ui->customPlotAccel->graph(1)->rescaleValueAxis(true);
+      ui->customPlotAccel->graph(2)->rescaleValueAxis(true);
+      //***** Gyro Plot ****************************************************/
+      // add data to lines:
+      ui->customPlotGyro->graph(0)->addData(key, tele.gx);
+      ui->customPlotGyro->graph(1)->addData(key, tele.gy);
+      ui->customPlotGyro->graph(2)->addData(key, tele.gz);
+      // remove data of lines that's outside visible range:
+      ui->customPlotGyro->graph(0)->removeDataBefore(key-32);
+      ui->customPlotGyro->graph(1)->removeDataBefore(key-32);
+      ui->customPlotGyro->graph(2)->removeDataBefore(key-32);
+      // rescale value (vertical) axis to fit the current data:
+      ui->customPlotGyro->graph(0)->rescaleValueAxis();
+      ui->customPlotGyro->graph(1)->rescaleValueAxis(true);
+      ui->customPlotGyro->graph(2)->rescaleValueAxis(true);
+      //***** Compass Plot ****************************************************/
+      // add data to lines:
+      ui->customPlotCompass->graph(0)->addData(key, tele.cx);
+      ui->customPlotCompass->graph(1)->addData(key, tele.cy);
+      ui->customPlotCompass->graph(2)->addData(key, tele.cz);
+      // remove data of lines that's outside visible range:
+      ui->customPlotCompass->graph(0)->removeDataBefore(key-32);
+      ui->customPlotCompass->graph(1)->removeDataBefore(key-32);
+      ui->customPlotCompass->graph(2)->removeDataBefore(key-32);
+      // rescale value (vertical) axis to fit the current data:
+      ui->customPlotCompass->graph(0)->rescaleValueAxis();
+      ui->customPlotCompass->graph(1)->rescaleValueAxis(true);
+      ui->customPlotCompass->graph(2)->rescaleValueAxis(true);
       lastPointKey = key;
     }
     // make key axis range scroll with the data (at a constant range size of 8):
-    ui->customPlot->xAxis->setRange(key+0.25, 8, Qt::AlignRight);
+    ui->customPlot->xAxis->setRange(key+0.25, 32, Qt::AlignRight);
     ui->customPlot->replot();
+    //***** Accel Plot ****************************************************/
+    ui->customPlotAccel->xAxis->setRange(key+0.25, 32, Qt::AlignRight);
+    ui->customPlotAccel->replot();
+    //***** Gyro Plot ****************************************************/
+    ui->customPlotGyro->xAxis->setRange(key+0.25, 32, Qt::AlignRight);
+    ui->customPlotGyro->replot();
+    //***** Compass Plot ****************************************************/
+    ui->customPlotCompass->xAxis->setRange(key+0.25, 32, Qt::AlignRight);
+    ui->customPlotCompass->replot();
 
     // calculate frames per second:
-    static double lastFpsKey;
-    static int frameCount;
-    ++frameCount;
-    if (key-lastFpsKey > 2) // average fps over 2 seconds
-    {
-      ui->statusBar->showMessage(
-            QString("%1 FPS, Total Data points: %2")
-            .arg(frameCount/(key-lastFpsKey), 0, 'f', 0)
-            .arg(ui->customPlot->graph(0)->data()->count()+ui->customPlot->graph(1)->data()->count())
-            , 0);
-      lastFpsKey = key;
-      frameCount = 0;
-    }
+//    static double lastFpsKey;
+//    static int frameCount;
+//    ++frameCount;
+//    if (key-lastFpsKey > 2) // average fps over 2 seconds
+//    {
+//      ui->statusBar->showMessage(
+//            QString("%1 FPS, Total Data points: %2")
+//            .arg(frameCount/(key-lastFpsKey), 0, 'f', 0)
+//            .arg(ui->customPlot->graph(0)->data()->count()+ui->customPlot->graph(1)->data()->count())
+//            , 0);
+//      lastFpsKey = key;
+//      frameCount = 0;
+//    }
   }
 
 void BBBTelemetry::on_pushButton_clicked()
@@ -148,7 +250,7 @@ void BBBTelemetry::update_gui(bool isConnected, bool isPressed, int potentiomete
         ui->progressBar_2->setValue(potentiometerValue2);
         ui->PotValue_2->setText(sPotValue2);
 //        BBBTelemetry::realtimeDataSlot(potentiometerValue,potentiometerValue2);
-        BBBTelemetry::realtimeDataSlot(tele.ax,tele.ay);
+        BBBTelemetry::realtimeDataSlot(potentiometerValue, potentiometerValue2, tele);
 
 //        BBBTelemetry::realtimeDataSlot(10, 0 - 10);
     }
@@ -170,4 +272,9 @@ void BBBTelemetry::update_gui(bool isConnected, bool isPressed, int potentiomete
         ui->progressBar->setValue(0);
         ui->progressBar_2->setValue(0);
     }
+}
+
+void BBBTelemetry::on_pushButtonEnableMotors_clicked()
+{
+    emit toggle_EnableMotorsButton_pressed();
 }

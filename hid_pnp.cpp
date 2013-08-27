@@ -40,12 +40,23 @@ void HID_PnP::PollUSB()
         }
     }
     else {
+        /** USB codes *************************************************************
+         *  Send buf[1] - Receive buf[0]
+         *
+         *  0x80 Toggle LED's (no data from remote expected)
+         *  0x37 Pot values
+         *  0x81 PushButton status
+         *  0x82 Send Motor enable toggle
+         *  0x83 Send control values to remote
+         *  0x42 Telemetry data
+         *  0x41 No telemetry to send (only from remote)
+         **************************************************************************/
         if(toggleLeds == true) {
             toggleLeds = false;
 
             buf[1] = 0x80;
 
-            if (hid_write(device, buf, sizeof(buf)) == -1)
+            if (hid_write(device, buf, sizeof(buf)) == -1)  //Write buffer to USB
             {
                 CloseDevice();
                 return;
@@ -53,15 +64,30 @@ void HID_PnP::PollUSB()
 
             buf[0] = 0x00;
             buf[1] = 0x37;
-            memset((void*)&buf[2], 0x00, sizeof(buf) - 2);
+            memset((void*)&buf[2], 0x00, sizeof(buf) - 2);  // Clear buffer exept 0 and 1
+        }
+        if(toggleMotors == true) {
+            toggleMotors = false;
+
+            buf[1] = 0x82;                                  // Toggle motors enable
+
+            if (hid_write(device, buf, sizeof(buf)) == -1)  //Write buffer to USB
+            {
+                CloseDevice();
+                return;
+            }
+
+            buf[0] = 0x00;
+            buf[1] = 0x37;
+            memset((void*)&buf[2], 0x00, sizeof(buf) - 2);  // Clear buffer exept 0 and 1
         }
 
-        if (hid_write(device, buf, sizeof(buf)) == -1)
+        if (hid_write(device, buf, sizeof(buf)) == -1)      // Write buffer to request data
         {
             CloseDevice();
             return;
         }
-        if(hid_read(device, buf, sizeof(buf)) == -1)
+        if(hid_read(device, buf, sizeof(buf)) == -1)        // Read data from USB
         {
             CloseDevice();
             return;
@@ -103,6 +129,8 @@ void HID_PnP::PollUSB()
             tele.cz = (buf[tt]<<8) + buf[tt+1];
 
             buf[1] = 0x37;
+            hid_comm_update(isConnected, pushbuttonStatus, potentiometerValue, potentiometerValue2, tele);
+
         }
         else if(buf[0] == 0x41) {
             //**** No new telemetry, do nothing. ****/
@@ -110,11 +138,14 @@ void HID_PnP::PollUSB()
         }
     }
 
-    hid_comm_update(isConnected, pushbuttonStatus, potentiometerValue, potentiometerValue2, tele);
+    //hid_comm_update(isConnected, pushbuttonStatus, potentiometerValue, potentiometerValue2, tele);
 }
 
 void HID_PnP::toggle_leds() {
     toggleLeds = true;
+}
+void HID_PnP::toggle_motors(){
+    toggleMotors = true;
 }
 
 void HID_PnP::CloseDevice() {
