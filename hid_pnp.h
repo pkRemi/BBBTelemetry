@@ -26,6 +26,7 @@ public slots:
     void toggle_leds();
     void toggle_motors();
     void PollUSB();
+    void send_set_data(SetValues data);
 
 private:
     bool isConnected;
@@ -35,6 +36,8 @@ private:
     qint16 potentiometerValue;
     qint16 potentiometerValue2;
     Telemetry tele;
+    SetValues setData;
+    bool newSetData;
     int t;
     int tt;
     hid_device *device;

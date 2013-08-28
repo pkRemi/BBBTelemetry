@@ -8,6 +8,8 @@ HID_PnP::HID_PnP(QObject *parent) :
     potentiometerValue = 0;
     potentiometerValue = 10;
     toggleLeds = 0;
+    toggleMotors = false;
+    newSetData = false;
 
     device = NULL;
     buf[0] = 0x00;
@@ -81,6 +83,26 @@ void HID_PnP::PollUSB()
             buf[1] = 0x37;
             memset((void*)&buf[2], 0x00, sizeof(buf) - 2);  // Clear buffer exept 0 and 1
         }
+        if(newSetData == true) {
+            newSetData = false;
+            buf[1] = 0x83;
+            tt=2;
+            for (int dd = 0;dd<6;dd++) {
+                buf[tt++] = setData.code[dd];
+                buf[tt++] = setData.value[dd] >> 8;   // MSB
+                buf[tt++] = setData.value[dd] & 0xff; // LSB
+            }
+            if (hid_write(device, buf, sizeof(buf)) == -1)  //Write buffer to USB
+            {
+                CloseDevice();
+                return;
+            }
+
+            buf[0] = 0x00;
+            buf[1] = 0x37;
+            memset((void*)&buf[2], 0x00, sizeof(buf) - 2);  // Clear buffer exept 0 and 1
+        }
+
 
         if (hid_write(device, buf, sizeof(buf)) == -1)      // Write buffer to request data
         {
@@ -127,7 +149,8 @@ void HID_PnP::PollUSB()
             tele.cy = (buf[tt]<<8) + buf[tt+1];
             tt = tt + 2;
             tele.cz = (buf[tt]<<8) + buf[tt+1];
-
+            tt = tt + 2;
+            tele.motorStatus = buf[tt];
             buf[1] = 0x37;
             hid_comm_update(isConnected, pushbuttonStatus, potentiometerValue, potentiometerValue2, tele);
 
@@ -146,6 +169,10 @@ void HID_PnP::toggle_leds() {
 }
 void HID_PnP::toggle_motors(){
     toggleMotors = true;
+}
+void HID_PnP::send_set_data(SetValues data){
+    setData = data;
+    newSetData = true;
 }
 
 void HID_PnP::CloseDevice() {

@@ -3,3 +3,6 @@
 Telemetry::Telemetry()
 {
 }
+SetValues::SetValues()
+{
+}

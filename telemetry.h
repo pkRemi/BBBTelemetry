@@ -17,7 +17,15 @@ public:
     qint16 cx;
     qint16 cy;
     qint16 cz;
+    qint8 motorStatus;
 
+};
+class SetValues
+{
+public:
+    SetValues();
+    qint8 code[6];
+    qint16 value[6];
 };
 
 #endif // TELEMETRY_H

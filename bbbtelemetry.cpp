@@ -11,6 +11,7 @@ BBBTelemetry::BBBTelemetry(QWidget *parent) :
     connect(this, SIGNAL(toggle_leds_button_pressed()), plugNPlay, SLOT(toggle_leds()));
     connect(this, SIGNAL(toggle_EnableMotorsButton_pressed()), plugNPlay, SLOT(toggle_motors()));
     connect(plugNPlay, SIGNAL(hid_comm_update(bool, bool, int, int, Telemetry)), this, SLOT(update_gui(bool, bool, int, int, Telemetry)));
+    connect(this, SIGNAL(send_set_values(SetValues)), plugNPlay, SLOT(send_set_data(SetValues)));
 }
 
 BBBTelemetry::~BBBTelemetry()
@@ -18,6 +19,7 @@ BBBTelemetry::~BBBTelemetry()
     disconnect(this, SIGNAL(toggle_leds_button_pressed()), plugNPlay, SLOT(toggle_leds()));
     disconnect(this, SIGNAL(toggle_EnableMotorsButton_pressed()), plugNPlay, SLOT(toggle_motors()));
     disconnect(plugNPlay, SIGNAL(hid_comm_update(bool, bool, int, int, Telemetry)), this, SLOT(update_gui(bool, bool, int, int, Telemetry)));
+    disconnect(this, SIGNAL(send_set_values(SetValues)), plugNPlay, SLOT(send_set_data(SetValues)));
     delete ui;
     delete plugNPlay;
 }
@@ -221,6 +223,7 @@ void BBBTelemetry::realtimeDataSlot(int value0, int value1, Telemetry tele)
 
 void BBBTelemetry::on_pushButton_clicked()
 {
+    ui->MessageWindow->appendPlainText("-> Toggle LED's");
     emit toggle_leds_button_pressed();
 }
 void BBBTelemetry::update_gui(bool isConnected, bool isPressed, int potentiometerValue, int potentiometerValue2, Telemetry tele)
@@ -231,8 +234,8 @@ void BBBTelemetry::update_gui(bool isConnected, bool isPressed, int potentiomete
     sPotValue2 = QString("%1").arg(potentiometerValue2,4,16);
     if(isConnected)
     {
-        ui->label_2->setEnabled(true);
-        ui->label_3->setEnabled(true);
+        //ui->label_2->setEnabled(true);
+        //ui->label_3->setEnabled(true);
         ui->pushButton->setEnabled(true);
         ui->pushbuttonStatus->setEnabled(true);
         ui->progressBar->setEnabled(true);
@@ -244,7 +247,12 @@ void BBBTelemetry::update_gui(bool isConnected, bool isPressed, int potentiomete
             ui->pushbuttonStatus->setText("Pushbutton State: Pressed");
         else
             ui->pushbuttonStatus->setText("Pushbutton State: Not Pressed");
-
+        if(tele.motorStatus == 1)
+            ui->labelMotorStatus->setText("Motors Enabled");
+        else if(tele.motorStatus == 0)
+           ui->labelMotorStatus->setText("Motors Disabled");
+        else if (tele.motorStatus == 2)
+            ui->labelMotorStatus->setText("Enabling Motors...");
         ui->progressBar->setValue(potentiometerValue);
         ui->PotValue->setText(sPotValue);
         ui->progressBar_2->setValue(potentiometerValue2);
@@ -256,8 +264,8 @@ void BBBTelemetry::update_gui(bool isConnected, bool isPressed, int potentiomete
     }
     else
     {
-        ui->label_2->setEnabled(false);
-        ui->label_3->setEnabled(false);
+        //ui->label_2->setEnabled(false);
+        //ui->label_3->setEnabled(false);
         ui->pushButton->setEnabled(false);
         ui->pushbuttonStatus->setEnabled(false);
         ui->progressBar->setEnabled(false);
@@ -276,5 +284,57 @@ void BBBTelemetry::update_gui(bool isConnected, bool isPressed, int potentiomete
 
 void BBBTelemetry::on_pushButtonEnableMotors_clicked()
 {
+    ui->MessageWindow->appendPlainText("-> Toggle Motors");
     emit toggle_EnableMotorsButton_pressed();
+}
+
+void BBBTelemetry::on_pushButtonStartLogging_clicked()
+{
+    QString a = "Start Logging. Using file: ";
+    a.append(ui->lineEditLogFileName->text());
+    ui->MessageWindow->appendPlainText(a);
+}
+
+void BBBTelemetry::on_pushButtonSendValues_clicked()
+{
+    ui->MessageWindow->appendPlainText("-> Send Set Values:");
+    QString a;
+    SetValues b;
+    b.code[0] = ui->pCode_1->text().toInt();
+    b.code[1] = ui->pCode_2->text().toInt();
+    b.code[2] = ui->pCode_3->text().toInt();
+    b.code[3] = ui->pCode_4->text().toInt();
+    b.code[4] = ui->pCode_5->text().toInt();
+    b.code[5] = ui->pCode_6->text().toInt();
+    b.value[0] = ui->pValue_1->text().toInt();
+    b.value[1] = ui->pValue_2->text().toInt();
+    b.value[2] = ui->pValue_3->text().toInt();
+    b.value[3] = ui->pValue_4->text().toInt();
+    b.value[4] = ui->pValue_5->text().toInt();
+    b.value[5] = ui->pValue_6->text().toInt();
+    a = ui->pLabel_1->text();
+    a.append(" = ");
+    a.append(ui->pValue_1->text());
+    ui->MessageWindow->appendPlainText(a);
+    a = ui->pLabel_2->text();
+    a.append(" = ");
+    a.append(ui->pValue_2->text());
+    ui->MessageWindow->appendPlainText(a);
+    a = ui->pLabel_3->text();
+    a.append(" = ");
+    a.append(ui->pValue_3->text());
+    ui->MessageWindow->appendPlainText(a);
+    a = ui->pLabel_4->text();
+    a.append(" = ");
+    a.append(ui->pValue_4->text());
+    ui->MessageWindow->appendPlainText(a);
+    a = ui->pLabel_5->text();
+    a.append(" = ");
+    a.append(ui->pValue_5->text());
+    ui->MessageWindow->appendPlainText(a);
+    a = ui->pLabel_6->text();
+    a.append(" = ");
+    a.append(ui->pValue_6->text());
+    ui->MessageWindow->appendPlainText(a);
+    emit send_set_values(b);
 }

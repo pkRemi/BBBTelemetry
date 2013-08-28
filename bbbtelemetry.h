@@ -37,10 +37,13 @@ public slots:
 signals:
     void toggle_leds_button_pressed();
     void toggle_EnableMotorsButton_pressed();
+    void send_set_values(SetValues);
 
 private slots:
     void on_pushButton_clicked();
     void on_pushButtonEnableMotors_clicked();
+    void on_pushButtonStartLogging_clicked();
+    void on_pushButtonSendValues_clicked();
 };
 
 #endif // BBBTELEMETRY_H
